@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+        <parent>
+                <groupId>com.ericsson.nms</groupId>
+                <artifactId>integration</artifactId>
+                <version>15.2.0.20</version>
+        </parent>
+    <groupId>com.ericsson.de</groupId>
+    <artifactId>enm-docker-parent</artifactId>
+    <version>1.0.2</version>
+    <packaging>pom</packaging>
+    <properties>
+	<!-- docker-related properties -->
+	<docker.hub>armdocker.rnd.ericsson.se/proj_oss_releases/enm</docker.hub>
+	<tag>latest</tag>
+        <ericsson.scm.url>scm:git:[fetch=]ssh://gerritmirror-ha.lmera.ericsson.se:29418/OSS/${project.groupId}/${project.artifactId}[push=]ssh://gerrit.ericsson.se:29418/OSS/${project.groupId}/${project.artifactId}</ericsson.scm.url>	
+    </properties>
+
+	<profiles>
+        <!-- this profile is used by applications to prepare the main docker image -->
+        <profile>
+            <id>prepare-main-image</id>
+            <activation>
+                <property>
+                    <name>prepare.main.image</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>enforce-property</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireProperty>
+                                            <property>imagename</property>
+                                            <message>Project Imagename must be specified. Please use -Dprepare.main.image -Dimagename=[imagename]\n\n</message>
+                                            <regex>^[a-z0-9][a-z0-9-]*[^-]$</regex>
+                                            <regexMessage>Project imagename must be alphanumeric and may contain dashes (but not at the beginning or the end).</regexMessage>
+                                        </requireProperty>
+                                    </rules>
+                                    <fail>true</fail>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <skipTests>true</skipTests>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.spotify</groupId>
+                        <artifactId>docker-maven-plugin</artifactId>
+                        <version>0.2.8</version>
+                        <configuration>
+                            <imageName>${docker.hub}/${imagename}:${tag}</imageName>
+                            <dockerDirectory>docker</dockerDirectory>
+                            <pushImage>true</pushImage>
+                            <serverId>docker</serverId>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+    <scm>
+	<developerConnection>${ericsson.scm.url}</developerConnection>
+	<connection>${ericsson.scm.url}</connection>
+        <tag>latest</tag>
+    </scm>
+</project>
